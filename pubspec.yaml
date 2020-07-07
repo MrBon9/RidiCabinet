@@ -1,0 +1,50 @@
+name: RidiCabinet
+description: A new Flutter project.
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.0.0 <3.0.0"
+
+dependencies:
+  http: ^0.12.0+4
+  flutter_secure_storage: ^3.3.3
+  toast: ^0.1.5
+  keyboard_avoider: ^0.1.2
+  gradient_app_bar: ^0.0.1
+  flutter_login: ^1.0.10+1
+  flutter:
+    sdk: flutter
+  shared_preferences: ^0.5.4+8
+  url_launcher: ^5.4.2
+  cupertino_icons: ^0.1.2
+  flutter_staggered_animations: "^0.1.2"
+  qr_flutter: ^3.1.0
+  rxdart: ^0.23.1
+  loading_animations: ^2.1.0
+  fluttertoast: ^3.1.3
+  geolocator: ^5.3.2+2
+  barcode_scan: ^2.0.0
+  flutter_multiselect: 0.0.1
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - images/
+    - images/Cab_images/
+    - assets/secret.json
+
+  fonts:
+    - family: Roboto-Black
+      fonts:
+        - asset: fonts/Roboto-Black.ttf
+    - family: Roboto-Light
+      fonts:
+        - asset: fonts/Roboto-Light.ttf
+    - family: Roboto-Regular
+      fonts:
+        - asset: fonts/Roboto-Regular.ttf
