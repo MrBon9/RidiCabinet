@@ -7,7 +7,7 @@ class UserInfoModels {
     _id = parsedJson['_id'];
     _name = parsedJson['username'];
     _sex = parsedJson['sex'];
-    _number = parsedJson['number'];
+    _number = parsedJson['phonenum'];
     _email = parsedJson['email'];
     _birthday = parsedJson['birthday'];
   }
@@ -25,4 +25,9 @@ class UserInfoModels {
   String get userBirth => _birthday;
 
   int get userOwnedCab => _ownedCab;
+
+  // set userName(String value) {
+  //   this._lastNameController = value;
+  //   notifyListeners();
+  // }
 }

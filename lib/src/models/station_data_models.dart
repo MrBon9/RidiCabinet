@@ -4,17 +4,32 @@ class StationDataModels {
   static List<_StationCab> _station = [];
 
   StationDataModels(parsedJson) {
-    parsedJson.forEach((value) {
-      _station.add(_StationCab(
-          value['_id'],
-          value['location'],
-          value['placename'],
-          value['no'],
-          value['address'],
-          value['price_id']['price_oneDay'],
-          value['price_id']['price_oneHour'],
-          value['price_id']['price_oneMonth']));
-    });
+    _station.clear();
+    if (parsedJson.length > 0) {
+      parsedJson.forEach((value) {
+        _station.add(_StationCab(
+            value['_id'],
+            value['location'],
+            value['placename'],
+            value['no'],
+            value['address'],
+            value['price_id']['price_oneDay'],
+            value['price_id']['price_oneHour'],
+            value['price_id']['price_oneMonth']));
+      });
+    }
+
+    // parsedJson.forEach((value) {
+    //   _station.add(_StationCab(
+    //       value['_id'],
+    //       value['location'],
+    //       value['placename'],
+    //       value['no'],
+    //       value['address'],
+    //       value['price_id']['price_oneDay'],
+    //       value['price_id']['price_oneHour'],
+    //       value['price_id']['price_oneMonth']));
+    // });
   }
 
   List<_StationCab> get station => _station;

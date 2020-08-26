@@ -54,8 +54,8 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Project',
-      // home: checker == true ? StationLocation() : LoginScreen(),
-      home: LoginScreen(),
+      home: checker == true ? StationLocation() : LoginScreen(),
+      // home: LoginScreen(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:RidiCabinet/src/resources/station_data.dart';
 import 'package:RidiCabinet/src/ui/user/user_cabinet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -460,6 +461,15 @@ class _OrderScreenState extends State<OrderScreen> {
                               UserInfoData.userStation.add(inside_station);
                           }
                         }
+                        Response loadStation = await post(
+                            NetworkConnect.api + 'list_station',
+                            body: {'id_num': UserInfoData.id});
+
+                        var stationResult = jsonDecode(loadStation.body);
+
+                        // print(stationResult.length);
+
+                        StationData.storeJson = stationResult;
                         // print(UserInfoData.userStation.length);
                         Navigator.push(
                           context,

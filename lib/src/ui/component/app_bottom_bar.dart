@@ -27,7 +27,7 @@ class AppBottomNavigationBar extends StatelessWidget {
     // );
     return Container(
       width: deviceWidth,
-      height: deviceHeight * 0.081,
+      height: deviceHeight * 0.11,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -38,87 +38,147 @@ class AppBottomNavigationBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.home,
-              color: Colors.white,
-              size: 32.0,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => StationLocation()),
-              );
-            },
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              IconButton(
+                icon: Icon(
+                  Icons.home,
+                  color: Colors.white,
+                  size: 32.0,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => StationLocation()),
+                  );
+                },
+              ),
+              Text(
+                "Home",
+                style: TextStyle(color: Colors.white),
+              ), // text
+            ],
           ),
-          IconButton(
-            icon: Icon(
-              Icons.person_add,
-              color: Colors.white,
-              size: 32.0,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddFriend()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.dashboard,
-              color: Colors.white,
-              size: 32.0,
-            ),
-            onPressed: () async {
-              Response response = await post(
-                  NetworkConnect.api + 'load_station',
-                  body: {'id_num': UserInfoData.id});
-              // print(response.body);
+          Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.screen_share,
+                    color: Colors.white,
+                    size: 32.0,
+                  ),
+                  onPressed: () async {
+                    Response response = await post(
+                        NetworkConnect.api + 'load_station',
+                        body: {'id_num': UserInfoData.id});
 
-              var result = jsonDecode(response.body);
+                    var result = jsonDecode(response.body);
+                    UserInfoData.storeUserCab = result;
+                    UserInfoData.userStation = new List();
+                    for (var i = 0; i < result.length; i++) {
+                      var inside_station = result[i]["station_id"];
 
-              UserInfoData.storeUserCab = result;
+                      if (UserInfoData.userStation.length == 0)
+                        UserInfoData.userStation.add(inside_station);
+                      else {
+                        bool found = false;
+                        for (var j = 0;
+                            j < UserInfoData.userStation.length;
+                            j++) {
+                          String temp = inside_station['_id'];
+                          String temp1 = UserInfoData.userStation[j]['_id'];
+                          if (temp == temp1) found = true;
+                        }
+                        if (found == false)
+                          UserInfoData.userStation.add(inside_station);
+                      }
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Authorize()),
+                    );
+                  },
+                ),
+                Text(
+                  "Share cab",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ]),
+          Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.dashboard,
+                    color: Colors.white,
+                    size: 32.0,
+                  ),
+                  onPressed: () async {
+                    Response response = await post(
+                        NetworkConnect.api + 'load_station',
+                        body: {'id_num': UserInfoData.id});
+                    // print(response.body);
 
-              // print(result);
-              // UserDetails.store = result;
-              UserInfoData.userStation = new List();
-              for (var i = 0; i < result.length; i++) {
-                var inside_station = result[i]["station_id"];
+                    var result = jsonDecode(response.body);
 
-                if (UserInfoData.userStation.length == 0)
-                  UserInfoData.userStation.add(inside_station);
-                else {
-                  bool found = false;
-                  for (var j = 0; j < UserInfoData.userStation.length; j++) {
-                    String temp = inside_station['_id'];
-                    String temp1 = UserInfoData.userStation[j]['_id'];
-                    if (temp == temp1) found = true;
-                  }
-                  if (found == false)
-                    UserInfoData.userStation.add(inside_station);
-                }
-              }
-              // print(UserInfoData.userStation.length);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => UserStation()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.settings,
-              color: Colors.white,
-              size: 32.0,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingScreen()),
-              );
-            },
-          ),
+                    UserInfoData.storeUserCab = result;
+
+                    // print(result);
+                    // UserDetails.store = result;
+                    UserInfoData.userStation = new List();
+                    for (var i = 0; i < result.length; i++) {
+                      var inside_station = result[i]["station_id"];
+
+                      if (UserInfoData.userStation.length == 0)
+                        UserInfoData.userStation.add(inside_station);
+                      else {
+                        bool found = false;
+                        for (var j = 0;
+                            j < UserInfoData.userStation.length;
+                            j++) {
+                          String temp = inside_station['_id'];
+                          String temp1 = UserInfoData.userStation[j]['_id'];
+                          if (temp == temp1) found = true;
+                        }
+                        if (found == false)
+                          UserInfoData.userStation.add(inside_station);
+                      }
+                    }
+                    // print(UserInfoData.userStation.length);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => UserStation()),
+                    );
+                  },
+                ),
+                Text(
+                  "Your cab",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ]),
+          Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.settings,
+                    color: Colors.white,
+                    size: 32.0,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingScreen()),
+                    );
+                  },
+                ),
+                Text(
+                  "Settings",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ]),
         ],
       ),
     );

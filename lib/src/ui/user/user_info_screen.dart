@@ -8,6 +8,9 @@ import 'package:RidiCabinet/src/resources/user_data.dart';
 import 'package:RidiCabinet/src/services/networking.dart';
 import 'package:RidiCabinet/src/ui/component/app_bottom_bar.dart';
 import 'package:RidiCabinet/src/ui/component/app_drawer.dart';
+import 'package:date_format/date_format.dart';
+
+import 'edit_user_info.dart';
 
 class UserInfo extends StatefulWidget {
   @override
@@ -21,7 +24,7 @@ class _UserInfoState extends State<UserInfo>
   String email = UserInfoData.email;
   String number;
   DateTime birthday;
-  int ownedCab;
+  int ownedCab = 0;
 
   double screenWidth, screenHeight;
   bool isCollapsed = true;
@@ -30,11 +33,61 @@ class _UserInfoState extends State<UserInfo>
   final Duration duration = const Duration(milliseconds: 500);
   TabController tabController;
   int _navBarIndex = 0;
+  String birthdateToShow = '';
+
+// Convert String to Date
+  // void convertDateFromString(String strDate) {
+  //   DateTime todayDate = DateTime.parse(strDate);
+  //   print(todayDate.isUtc);
+  //   print(todayDate);
+  //   print(formatDate(todayDate, [dd, '/', mm, '/', yyyy]));
+  //   birthdateToShow = formatDate(todayDate, [dd, '/', mm, '/', yyyy]);
+  //   // , ' ', hh, ':', nn, ':', ss, ' ', am
+  // }
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: duration);
+
+    this.userState();
+    // convertDateFromString(UserInfoData.birthday);
+  }
+
+  void userState() async {
+    Response response = await post(NetworkConnect.api + 'load_station',
+        body: {'id_num': UserInfoData.id});
+
+    var result_cab = jsonDecode(response.body);
+    UserInfoData.storeUserCab = result_cab;
+    setState(() {
+      ownedCab = UserInfoData.storeUserCab.length;
+    });
+
+    Response response1 = await post(NetworkConnect.api + 'user_info',
+        body: {'user_id': UserInfoData.id});
+
+    var result_user = jsonDecode(response1.body);
+
+    UserInfoModels data = new UserInfoModels.fromJson(result_user);
+
+    setState(() {
+      //new
+      if (data.userBirth != null)
+        UserInfoData.birthday = data.userBirth;
+      else
+        UserInfoData.birthday = "";
+
+      if (data.userNumber != null)
+        UserInfoData.number = data.userNumber;
+      else
+        UserInfoData.number = "";
+
+      if (data.userSex != null)
+        UserInfoData.sex = data.userSex;
+      else
+        UserInfoData.sex = "";
+    });
   }
 
   @override
@@ -127,7 +180,7 @@ class _UserInfoState extends State<UserInfo>
                           // color: Colors.blue,
                           child: CircleAvatar(
                             radius: 45.0,
-                            backgroundImage: AssetImage("images/Zoe.jpg"),
+                            backgroundImage: AssetImage("images/island.jpg"),
                           ),
                         ),
                         SizedBox(
@@ -216,7 +269,7 @@ class _UserInfoState extends State<UserInfo>
                                   Container(
                                     width: 160.0,
                                     child: Text(
-                                      'Pham Minh Duy',
+                                      UserInfoData.username,
                                       style: TextStyle(
                                         fontSize: 16.0,
                                         fontFamily: 'Roboto-Regular',
@@ -230,7 +283,7 @@ class _UserInfoState extends State<UserInfo>
                                   Container(
                                     width: 160.0,
                                     child: Text(
-                                      'Male',
+                                      UserInfoData.sex,
                                       style: TextStyle(
                                         fontSize: 16.0,
                                         fontFamily: 'Roboto-Regular',
@@ -244,7 +297,11 @@ class _UserInfoState extends State<UserInfo>
                                   Container(
                                     width: 160.0,
                                     child: Text(
-                                      '29/09/1997',
+                                      birthdateToShow,
+                                      // formatDate(
+                                      //     todayDate, [yyyy, '/', mm, '/', dd]),
+                                      // UserInfoData.birthday
+                                      //     .format(new DateTime('yMd')),
                                       style: TextStyle(
                                         fontSize: 16.0,
                                         fontFamily: 'Roboto-Regular',
@@ -258,7 +315,7 @@ class _UserInfoState extends State<UserInfo>
                                   Container(
                                     width: 160.0,
                                     child: Text(
-                                      '0962299798',
+                                      UserInfoData.number,
                                       style: TextStyle(
                                         fontSize: 16.0,
                                         fontFamily: 'Roboto-Regular',
@@ -287,7 +344,7 @@ class _UserInfoState extends State<UserInfo>
                                   Container(
                                     width: 160.0,
                                     child: Text(
-                                      '2 Cabinets',
+                                      '${ownedCab} Cabinet(s)',
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 16.0,
@@ -343,7 +400,14 @@ class _UserInfoState extends State<UserInfo>
                                     ),
                                   ),
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  // convertDateFromString(UserInfoData.birthday);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => EditUserData()),
+                                  );
+                                },
                               ),
                               RaisedButton(
                                 shape: RoundedRectangleBorder(

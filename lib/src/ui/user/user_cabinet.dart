@@ -1,12 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:RidiCabinet/src/blocs/cabinet_functions.dart';
 import 'package:RidiCabinet/src/resources/station_data.dart';
 import 'package:RidiCabinet/src/resources/user_data.dart';
+import 'package:RidiCabinet/src/services/networking.dart';
 import 'package:RidiCabinet/src/ui/component/app_drawer.dart';
+import 'package:RidiCabinet/src/ui/user/screen_state.dart';
 import 'package:RidiCabinet/src/ui/user/search_button.dart';
 import 'package:RidiCabinet/src/ui/user/user_info_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:RidiCabinet/src/ui/component/app_bottom_bar.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart';
 
 class UserCabinetList extends StatefulWidget {
   var item;
@@ -69,6 +76,36 @@ class _UserCabinetListState extends State<UserCabinetList> {
     );
   }
 
+  void openButton(userCabinet) async {
+    String qrResult = await CabFunctions.ScannQR();
+    var box_id;
+    var box_no;
+    var station_id;
+    var role;
+
+    box_id = userCabinet['_id'];
+    box_no = userCabinet['no'];
+    station_id = userCabinet['station_id'];
+    role = userCabinet['role'];
+
+    print(qrResult);
+    if (qrResult != null) {
+      Response response = await post(NetworkConnect.api + 'open_box', body: {
+        'id_num': UserInfoData.id.toString(),
+        'box_id': box_id.toString(),
+        'box_no': box_no.toString(),
+        'token': qrResult.toString()
+      });
+      Fluttertoast.showToast(
+          msg: response.body,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIos: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,20 +147,29 @@ class _UserCabinetListState extends State<UserCabinetList> {
                   child: new CupertinoAlertDialog(
                     title: new Column(
                       children: <Widget>[
-                        new Text("Do you want to use Cab $index ?"),
-                        new Icon(
-                          Icons.crop_square,
-                          color: Colors.green,
-                        )
+                        new Text("Choose your option"),
+                        // new Icon(
+                        //   Icons.crop_square,
+                        //   color: Colors.green,
+                        // )
                       ],
                     ),
-                    content: new Text("Selected Item $index"),
+                    content:
+                        new Text("Tap 'Open' if you want to open this cab."),
                     actions: <Widget>[
                       new FlatButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            openButton(UserInfoData.userCabinet[index]);
                             Navigator.of(context).pop();
                           },
-                          child: new Text("OK"))
+                          child: new Text("Open")),
+                      new FlatButton(
+                        onPressed: () {
+                          // print('Sayohyeah');
+                          Navigator.of(context).pop();
+                        },
+                        child: new Text("Cancel"),
+                      )
                     ],
                   ));
             },
@@ -279,116 +325,99 @@ class _UserStationState extends State<UserStation>
                 )),
               ],
             ),
-            body: Container(
-              height: screenHeight * 0.81,
-              child: Column(
-                children: <Widget>[
-                  Container(
-                    decoration: new BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey[400],
-                          blurRadius: 7.0, // soften the shadow
-                          spreadRadius: 0.5, //extend the shadow
-                          offset: Offset(
-                            1.0, // Move to right 10  horizontally
-                            1.0, // Move to bottom 10 Vertically
-                          ),
-                        )
-                      ],
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                // Container(
+                //   decoration: new BoxDecoration(
+                //     color: Colors.white,
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.grey[400],
+                //         blurRadius: 7.0, // soften the shadow
+                //         spreadRadius: 0.5, //extend the shadow
+                //         offset: Offset(
+                //           1.0, // Move to right 10  horizontally
+                //           1.0, // Move to bottom 10 Vertically
+                //         ),
+                //       )
+                //     ],
+                //   ),
+                //   height: 50.0,
+                //   width: !isCollapsed ? 0 : double.infinity,
+                // ),
+                SizedBox(
+                  height: 15.0,
+                ),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      width: screenWidth * 0.92,
+                      // height:
+                      //     !isCollapsed ? screenHeight * 0.5 : screenHeight * 0.77,
+                      child: ListView.builder(
+                          // show list station
+                          itemCount: UserInfoData.userStation.length,
+                          itemBuilder: (context, index) {
+                            return _stationContainer(index);
+                          }),
                     ),
-                    height: 50.0,
-                    width: !isCollapsed ? 0 : double.infinity,
-                    // child: Row(
-                    //   children: <Widget>[
-                    //     Container(
-                    //       width: screenWidth * 0.3,
-                    //       color: Colors.white,
-                    //       child: FlatButton(
-                    //         child: Text(
-                    //           'Default',
-                    //           style: TextStyle(
-                    //             fontSize: 18.0,
-                    //             fontStyle: FontStyle.italic,
-                    //             color: Colors.black,
-                    //           ),
-                    //         ),
-                    //         onPressed: () {
-                    //           setState(() {
-                    //             _sortStationDefault();
-                    //           });
-                    //         },
-                    //       ),
-                    //     ),
-                    //     SizedBox(
-                    //       width: screenWidth * 0.033,
-                    //     ),
-                    //     Container(
-                    //       width: screenWidth * 0.3,
-                    //       color: Colors.white,
-                    //       child: FlatButton(
-                    //         child: Text(
-                    //           'Recent',
-                    //           style: TextStyle(
-                    //             fontSize: 18.0,
-                    //             fontStyle: FontStyle.italic,
-                    //             color: Colors.black,
-                    //           ),
-                    //         ),
-                    //         onPressed: () {
-                    //           setState(() {
-                    //             _sortStationRecent();
-                    //           });
-                    //         },
-                    //       ),
-                    //     ),
-                    //     Container(
-                    //       width: screenWidth * 0.3,
-                    //       color: Colors.white,
-                    //       child: FlatButton(
-                    //         child: Text(
-                    //           'Near you',
-                    //           style: TextStyle(
-                    //             fontSize: 18.0,
-                    //             fontStyle: FontStyle.italic,
-                    //             color: Colors.black,
-                    //           ),
-                    //         ),
-                    //         onPressed: () {
-                    //           setState(() {
-                    //             _sortStationNearest();
-                    //           });
-                    //         },
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
                   ),
-                  SizedBox(
-                    height: 15.0,
-                  ),
-                  Container(
-                    width: screenWidth * 0.92,
-                    height:
-                        !isCollapsed ? screenHeight * 0.5 : screenHeight * 0.60,
-                    child: ListView.builder(
-                        // show list station
-                        itemCount: UserInfoData.userStation.length,
-                        itemBuilder: (context, index) {
-                          return _stationContainer(index);
-                        }),
-                    // children: <Widget>[
-                    //   stationContainer(1),
-                    // ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
             floatingActionButton: FloatingActionButton(
-              onPressed: () {},
+              onPressed: () async {
+                if (ScreenState.user_station_screen == true) {
+                  String qrResult = await ScreenState.Scann_QR();
+
+                  Response response = await post(
+                      NetworkConnect.api + 'query_station_id',
+                      body: {'token': qrResult});
+
+                  var result_stationID = json.decode(response.body);
+                  if (result_stationID['station_id'] != null) {
+                    //print(UserDetails.listStation);
+                    var check = false;
+                    var index;
+                    for (var i = 0; i < UserInfoData.userStation.length; i++) {
+                      if (UserInfoData.userStation[i]['_id'] ==
+                          result_stationID['station_id']) {
+                        check = true;
+                        index = i;
+                        break;
+                      }
+                    }
+                    if (check == true) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserCabinetList(
+                                item: UserInfoData.userStation[index])),
+                      );
+                    } else {
+                      Fluttertoast.showToast(
+                          msg: "Not Found",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIos: 1,
+                          backgroundColor: Colors.blue,
+                          textColor: Colors.white);
+                    }
+                  } else {
+                    Fluttertoast.showToast(
+                        msg: "error",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        timeInSecForIos: 1,
+                        backgroundColor: Colors.blue,
+                        textColor: Colors.white);
+                  }
+                }
+              },
               tooltip: 'Scan QR',
               child: Image.asset(
                 'images/QR.png',
@@ -509,6 +538,9 @@ class _UserStationState extends State<UserStation>
   @mustCallSuper
   void initState() {
     super.initState();
+    ScreenState.register_station_screen = false;
+    ScreenState.authorize_screen = false;
+    ScreenState.user_station_screen = true;
     _controller = AnimationController(vsync: this, duration: duration);
   }
 

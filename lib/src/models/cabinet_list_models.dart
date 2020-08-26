@@ -2,10 +2,13 @@ class CabListModels {
   static List<_CabinetProperties> _cabinetList = [];
 
   CabListModels(parsedJson) {
-    parsedJson.forEach((value) {
-      _cabinetList.add(_CabinetProperties(value['state'], value['status'],
-          value['_id'], value['no'], value['station_id']));
-    });
+    _cabinetList.clear();
+    if (parsedJson.length > 0) {
+      parsedJson.forEach((value) {
+        _cabinetList.add(_CabinetProperties(value['state'], value['status'],
+            value['_id'], value['no'], value['station_id']));
+      });
+    }
   }
 
   List<_CabinetProperties> get cabinetList => _cabinetList;

@@ -14,11 +14,21 @@ class UserInfoData {
   //user username
   static String username;
 
+  static String sex = "";
+
+  static String number = "";
+
+  static String birthday;
+
   static List<dynamic> userStation = new List();
 
   static List<dynamic> userCabinet = new List();
 
   static List<dynamic> storeUserCab = new List();
+
+  static String authToUserID = "";
+
+  static List<dynamic> authObjList = new List();
 
   // static String uname;
   // Client client = Client();

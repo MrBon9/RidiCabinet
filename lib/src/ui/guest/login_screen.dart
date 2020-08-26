@@ -8,6 +8,7 @@ import 'package:RidiCabinet/src/resources/station_data.dart';
 import 'package:RidiCabinet/src/resources/user_data.dart';
 import 'package:RidiCabinet/src/services/networking.dart';
 import 'package:RidiCabinet/src/ui/user/station_location.dart';
+import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toast/toast.dart';
 import 'signup_screen.dart';
@@ -28,11 +29,26 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailController = new TextEditingController();
   TextEditingController passController = new TextEditingController();
 
+  KeyboardVisibilityNotification _keyboardVisibility =
+      new KeyboardVisibilityNotification();
+  int _keyboardVisibilitySubscriberId;
+  bool _keyboardState;
+
   @override
   void initState() {
     super.initState();
     emailController.addListener(() {});
     passController.addListener(() {});
+
+    _keyboardState = _keyboardVisibility.isKeyboardVisible;
+    _keyboardVisibilitySubscriberId = _keyboardVisibility.addNewListener(
+      onChange: (bool visible) {
+        setState(() {
+          _keyboardState = visible;
+          print(_keyboardState);
+        });
+      },
+    );
   }
 
   @override
@@ -41,6 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
     // widget tree.
     emailController.dispose();
     passController.dispose();
+
+    _keyboardVisibility.removeListener(_keyboardVisibilitySubscriberId);
+    _keyboardVisibility.dispose();
     super.dispose();
   }
 
@@ -107,8 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
         Response response = await post(NetworkConnect.api + 'login',
             body: {'email': email, 'password': pass});
 
-        if (response.body.contains('Email not exists') ||
-            response.body.contains('Wrong password')) {
+        if (response.body.contains('Email not exists') |
+            response.body.contains('Wrong password') |
+            response.body.contains('Someone is using this account') |
+            response.body.contains('Access denied!')) {
           Toast.show(response.body, context,
               duration: Toast.LENGTH_SHORT,
               gravity: Toast.BOTTOM,
@@ -131,6 +152,21 @@ class _LoginScreenState extends State<LoginScreen> {
           UserInfoData.id = data.userId;
           UserInfoData.username = data.userName;
           UserInfoData.email = data.userEmail;
+
+          if (data.userBirth != null)
+            UserInfoData.birthday = data.userBirth;
+          else
+            UserInfoData.birthday = "";
+
+          if (data.userNumber != null)
+            UserInfoData.number = data.userNumber;
+          else
+            UserInfoData.number = "";
+
+          if (data.userSex != null)
+            UserInfoData.sex = data.userSex;
+          else
+            UserInfoData.sex = "";
 
           //luu thong tin dang nhap vao SharedPreferences ben flutter
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -158,20 +194,17 @@ class _LoginScreenState extends State<LoginScreen> {
           // UserDetails.store = result1;
 
           //luu thong tin dang nhap vao SharedPreferences ben android studio
-          // var platform = const MethodChannel('flutter.native/AndroidPlatform');
-          // final String addUserInfo =
-          //     await platform.invokeMethod('addUserInfo', {
-          //   "id": UserDetails.id,
-          //   "username": UserDetails.username,
-          //   "email": UserDetails.email
-          // });
-          // var addUserInfo_result = (addUserInfo);
-          // print(addUserInfo_result);
+          var platform = const MethodChannel('flutter.native/AndroidPlatform');
+          final String addUserInfo =
+              await platform.invokeMethod('addUserInfo', {
+            "id": UserInfoData.id,
+            "username": UserInfoData.username,
+            "email": UserInfoData.email
+          });
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => StationLocation()),
-          );
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => StationLocation()),
+              (Route<dynamic> route) => false);
         }
       },
     );
@@ -329,7 +362,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   height: 30.0,
                 ),
-                _buildLogo(deviceHeight, deviceWidth),
+                _keyboardState
+                    ? Container()
+                    : _buildLogo(deviceHeight, deviceWidth),
+                SizedBox(
+                  height: 45.0,
+                ),
                 SizedBox(
                   height: 45.0,
                 ),

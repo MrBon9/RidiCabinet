@@ -1,8 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:RidiCabinet/src/blocs/cabinet_functions.dart';
+import 'package:RidiCabinet/src/ui/guest/login_screen.dart';
+import 'package:RidiCabinet/src/ui/user/new_search_button.dart';
+import 'package:RidiCabinet/src/ui/user/screen_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
 import 'package:loading_animations/loading_animations.dart';
 import 'package:RidiCabinet/src/models/cabinet_list_models.dart';
@@ -11,12 +17,11 @@ import 'package:RidiCabinet/src/resources/cabinet_data.dart';
 import 'package:RidiCabinet/src/resources/station_data.dart';
 import 'package:RidiCabinet/src/resources/user_data.dart';
 import 'package:RidiCabinet/src/services/networking.dart';
-// import 'package:my_cabinet_app/src/ui/design/custom_list_item.dart';
-// import 'package:rounded_loading_button/rounded_loading_button.dart';
 import 'package:RidiCabinet/src/ui/user/search_button.dart';
 import 'package:RidiCabinet/src/ui/component/app_drawer.dart';
 import 'package:RidiCabinet/src/ui/component/app_bottom_bar.dart';
 import 'package:RidiCabinet/src/ui/user/cab_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StationLocation extends StatefulWidget {
   @override
@@ -53,7 +58,7 @@ class _StationLocationState extends State<StationLocation>
 
   List<int> stationIDList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-  StationDataModels stationData = new StationDataModels(StationData.storeJson);
+  StationDataModels stationData = new StationDataModels([]);
 
   @override
   @mustCallSuper
@@ -62,20 +67,100 @@ class _StationLocationState extends State<StationLocation>
     // this.testLocation();
     //call Android plaftform
     platform.invokeMethod('startSocket');
+    platform.setMethodCallHandler(_blockUser);
+    this.loadRegisterStation();
+    ScreenState.register_station_screen = true;
+    ScreenState.authorize_screen = false;
+    ScreenState.user_station_screen = false;
     // platform.setMethodCallHandler(_handleMethod);
     _controller = AnimationController(vsync: this, duration: duration);
   }
 
+  Future<dynamic> _blockUser(MethodCall call) async {
+    if (call.method == "blockUser") {
+      var result = jsonDecode(call.arguments);
+      if (result['active'] == "false") {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        //Remove String
+        prefs.remove("id");
+        prefs.remove("email");
+        prefs.remove("username");
+
+        final String deleteUserInfo =
+            await platform.invokeMethod('deleteUserInfo');
+
+        await post(NetworkConnect.api + 'logout',
+            body: {'user_id': UserInfoData.id});
+
+        Fluttertoast.showToast(
+            msg: "You has been blocked",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIos: 1,
+            backgroundColor: Colors.blue,
+            textColor: Colors.white);
+
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+            (Route<dynamic> route) => false);
+
+        print('block user');
+      }
+    }
+  }
+
   void _sortStationDefault() {
-    stationIDList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    // stationIDList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    this.loadRegisterStation();
   }
 
+  //new
   void _sortStationRecent() {
-    stationIDList = [3, 0, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11];
+    // stationIDList = [3, 0, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11];
   }
 
-  void _sortStationNearest() {
-    stationIDList = [0, 4, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11];
+  //new
+  void _sortStationNearest() async {
+    // stationIDList = [0, 4, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11];
+    print("near u");
+    stationData.station.clear();
+    GeolocationStatus geolocationStatus =
+        await Geolocator().checkGeolocationPermissionStatus();
+    print(geolocationStatus);
+    Position position = await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    print(position);
+    if (position != null) {
+      Response response =
+          await post(NetworkConnect.api + 'list_station_near_user', body: {
+        'latitude': position.latitude.toString(),
+        'longitude': position.longitude.toString(),
+      });
+      var stationResult = jsonDecode(response.body);
+
+      StationData.storeJson = stationResult;
+      print(stationResult);
+
+      setState(() {
+        stationData = new StationDataModels(StationData.storeJson);
+      });
+    }
+  }
+
+  void loadRegisterStation() async {
+    stationData.station.clear();
+    Response loadStation = await post(NetworkConnect.api + 'list_station',
+        body: {'id_num': UserInfoData.id});
+
+    var stationResult = jsonDecode(loadStation.body);
+
+    StationData.storeJson = stationResult;
+    print("hey");
+    print(stationResult);
+
+    setState(() {
+      stationData = new StationDataModels(StationData.storeJson);
+    });
   }
 
   Widget menu(context) {
@@ -122,7 +207,7 @@ class _StationLocationState extends State<StationLocation>
                             topLeft: Radius.circular(8.0),
                             bottomLeft: Radius.circular(8.0)),
                         child: Image.asset(
-                          thumbnails[index],
+                          thumbnails[index % 12],
                           fit: BoxFit.fill,
                         ),
                       ),
@@ -160,17 +245,6 @@ class _StationLocationState extends State<StationLocation>
               ),
             ),
             onTap: () async {
-              // showDialog(
-              //     context: context,
-              //     builder: (BuildContext context) {
-              //       return LoadingBouncingGrid.square(
-              //         backgroundColor: Colors.lightBlue,
-              //         borderColor: Colors.lightBlue,
-              //         size: 45.0,
-              //         duration: Duration(milliseconds: 2500),
-              //       );
-              //     });
-
               Response response = await post(NetworkConnect.api + 'list_box',
                   body: {'station_id': stationData.station[index].stationID});
               var result = jsonDecode(response.body);
@@ -192,13 +266,12 @@ class _StationLocationState extends State<StationLocation>
                 MaterialPageRoute(
                     builder: (context) => CabinetListScreen(
                           index: index,
-                          // station: stationData.station[index],
                         )),
               );
             },
           ),
         ),
-        tag: "cab $index",
+        tag: "station $index",
       ),
     );
   }
@@ -253,129 +326,205 @@ class _StationLocationState extends State<StationLocation>
                     child: IconButton(
                   onPressed: () {
                     print('search');
-                    showSearch(context: context, delegate: Searching());
+                    // showSearch(context: context, delegate: Searching());
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => NewSearchButton(
+
+                              // station: stationData.station[index],
+                              )),
+                    );
                   },
                   icon: Icon(Icons.search),
                 )),
               ],
             ),
-            body: Container(
-              height: screenHeight * 0.81,
-              child: Column(
-                children: <Widget>[
-                  Container(
-                    decoration: new BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey[400],
-                          blurRadius: 7.0, // soften the shadow
-                          spreadRadius: 0.5, //extend the shadow
-                          offset: Offset(
-                            1.0, // Move to right 10  horizontally
-                            1.0, // Move to bottom 10 Vertically
-                          ),
-                        )
-                      ],
-                    ),
-                    height: 50.0,
-                    width: !isCollapsed ? 0 : double.infinity,
-                    child: Row(
-                      children: <Widget>[
-                        Container(
-                          width: screenWidth * 0.3,
-                          color: Colors.white,
-                          child: FlatButton(
-                            child: Text(
-                              'Default',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black,
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _sortStationDefault();
-                              });
-                            },
-                          ),
+            body: Column(
+              children: <Widget>[
+                Container(
+                  decoration: new BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey[400],
+                        blurRadius: 7.0, // soften the shadow
+                        spreadRadius: 0.5, //extend the shadow
+                        offset: Offset(
+                          1.0, // Move to right 10  horizontally
+                          1.0, // Move to bottom 10 Vertically
                         ),
-                        SizedBox(
-                          width: screenWidth * 0.033,
-                        ),
-                        Container(
-                          width: screenWidth * 0.3,
-                          color: Colors.white,
-                          child: FlatButton(
-                            child: Text(
-                              'Recent',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black,
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _sortStationRecent();
-                              });
-                            },
-                          ),
-                        ),
-                        Container(
-                          width: screenWidth * 0.3,
-                          color: Colors.white,
-                          child: FlatButton(
-                            child: Text(
-                              'Near you',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black,
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _sortStationNearest();
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                      )
+                    ],
                   ),
-                  SizedBox(
-                    height: 15.0,
+                  height: 50.0,
+                  width: !isCollapsed ? 0 : double.infinity,
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        width: screenWidth * 0.3,
+                        color: Colors.white,
+                        child: FlatButton(
+                          child: Text(
+                            'Default',
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.black,
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _sortStationDefault();
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: screenWidth * 0.033,
+                      ),
+                      Container(
+                        width: screenWidth * 0.3,
+                        color: Colors.white,
+                        child: FlatButton(
+                          child: Text(
+                            'Recent',
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.black,
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _sortStationRecent();
+                            });
+                          },
+                        ),
+                      ),
+                      Container(
+                        width: screenWidth * 0.3,
+                        color: Colors.white,
+                        child: FlatButton(
+                          child: Text(
+                            'Near you',
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.black,
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _sortStationNearest();
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  Container(
+                ),
+                SizedBox(
+                  height: 15.0,
+                ),
+                //new
+                Expanded(
+                    child: Center(
+                  child: Container(
                     width: screenWidth * 0.92,
-                    height:
-                        !isCollapsed ? screenHeight * 0.5 : screenHeight * 0.60,
-                    child: ListView(
-                      children: <Widget>[
-                        stationContainer(stationIDList[0]),
-                        stationContainer(stationIDList[1]),
-                        stationContainer(stationIDList[2]),
-                        stationContainer(stationIDList[3]),
-                        stationContainer(stationIDList[4]),
-                        stationContainer(stationIDList[5]),
-                        stationContainer(stationIDList[6]),
-                        stationContainer(stationIDList[7]),
-                        stationContainer(stationIDList[8]),
-                        stationContainer(stationIDList[9]),
-                        stationContainer(stationIDList[10]),
-                        stationContainer(stationIDList[11]),
-                      ],
-                    ),
+                    // height:
+                    //     !isCollapsed ? screenHeight * 0.5 : screenHeight * 0.70,
+                    child: ListView.builder(
+                        itemCount: stationData.station.length,
+                        itemBuilder: (context, index) {
+                          return stationContainer(index);
+                        }),
                   ),
-                ],
-              ),
+                )),
+              ],
             ),
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
             floatingActionButton: FloatingActionButton(
-              onPressed: () {},
+              onPressed: () async {
+                if (ScreenState.register_station_screen == true) {
+                  String qrResult = await ScreenState.Scann_QR();
+                  Response response = await post(
+                      NetworkConnect.api + 'query_station_id',
+                      body: {'token': qrResult});
+
+                  var result_stationID = json.decode(response.body);
+
+                  if (result_stationID['station_id'] != null) {
+                    var check = false;
+                    var index;
+
+                    Response loadStation = await post(
+                        NetworkConnect.api + 'list_station',
+                        body: {'id_num': UserInfoData.id});
+
+                    var stationResult = jsonDecode(loadStation.body);
+
+                    StationData.storeJson = stationResult;
+
+                    stationData = new StationDataModels(StationData.storeJson);
+
+                    for (var i = 0; i < stationData.station.length; i++) {
+                      if (stationData.station[i].stationID ==
+                          result_stationID['station_id']) {
+                        check = true;
+                        index = i;
+                        break;
+                      }
+                    }
+
+                    if (check == true) {
+                      Response response1 =
+                          await post(NetworkConnect.api + 'list_box', body: {
+                        'station_id': stationData.station[index].stationID
+                      });
+                      var result_list_box = jsonDecode(response1.body);
+                      CabinetData.cabJson = result_list_box;
+                      StationData.priceOneHour =
+                          stationData.station[index].stationAHourPrice;
+                      StationData.priceOneDay =
+                          stationData.station[index].stationADayPrice;
+                      StationData.priceOneMonth =
+                          stationData.station[index].stationAMonthPrice;
+                      StationData.stationLoc =
+                          stationData.station[index].stationLocation;
+                      StationData.stationNo =
+                          stationData.station[index].stationNumber;
+                      StationData.stationDetailAddress =
+                          stationData.station[index].stationAddressDetail;
+                      // StationData.stationPic.add(thumbnails[index]);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CabinetListScreen(
+                                    index: index,
+                                    // station: stationData.station[index],
+                                  )));
+                    } else {
+                      Fluttertoast.showToast(
+                          msg: "Not Found",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          timeInSecForIos: 1,
+                          backgroundColor: Colors.blue,
+                          textColor: Colors.white);
+                    }
+                  } else {
+                    Fluttertoast.showToast(
+                        msg: "error",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        timeInSecForIos: 1,
+                        backgroundColor: Colors.blue,
+                        textColor: Colors.white);
+                  }
+                }
+              },
               tooltip: 'Scan QR',
               child: Image.asset(
                 'images/QR.png',

@@ -14,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AppDrawer extends StatelessWidget {
-  String u_name = 'Mr.Bon';
+  String u_name = UserInfoData.username;
   @override
   Widget build(BuildContext context) {
     double deviceHeight = MediaQuery.of(context).size.height;
@@ -27,7 +27,7 @@ class AppDrawer extends StatelessWidget {
             child: Row(
               children: <Widget>[
                 Padding(
-                  padding: EdgeInsets.all(20.0),
+                  padding: EdgeInsets.all(10.0),
                   child: Container(
                     height: 90.0,
                     width: 90.0,
@@ -70,11 +70,35 @@ class AppDrawer extends StatelessWidget {
               Response response = await post(
                   NetworkConnect.api + 'load_station',
                   body: {'id_num': UserInfoData.id});
+              // print(response.body);
+
               var result = jsonDecode(response.body);
+
+              UserInfoData.storeUserCab = result;
+
+              // print(result);
               // UserDetails.store = result;
+              UserInfoData.userStation = new List();
+              for (var i = 0; i < result.length; i++) {
+                var inside_station = result[i]["station_id"];
+
+                if (UserInfoData.userStation.length == 0)
+                  UserInfoData.userStation.add(inside_station);
+                else {
+                  bool found = false;
+                  for (var j = 0; j < UserInfoData.userStation.length; j++) {
+                    String temp = inside_station['_id'];
+                    String temp1 = UserInfoData.userStation[j]['_id'];
+                    if (temp == temp1) found = true;
+                  }
+                  if (found == false)
+                    UserInfoData.userStation.add(inside_station);
+                }
+              }
+              // print(UserInfoData.userStation.length);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => UserCabinetList()),
+                MaterialPageRoute(builder: (context) => UserStation()),
               );
             },
           ),

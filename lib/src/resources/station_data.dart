@@ -6,7 +6,7 @@ import 'package:RidiCabinet/src/resources/user_data.dart';
 import 'package:RidiCabinet/src/services/networking.dart';
 
 class StationData {
-  static List storeJson;
+  static List storeJson = new List();
 
   static int priceOneHour, priceOneDay, priceOneMonth;
   static String stationDetailAddress, stationLoc, stationNo;

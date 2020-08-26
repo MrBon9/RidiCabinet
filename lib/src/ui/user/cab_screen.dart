@@ -11,9 +11,10 @@ import 'package:RidiCabinet/src/ui/user/order_cab.dart';
 import 'package:RidiCabinet/src/ui/user/station_location.dart';
 
 class CabinetListScreen extends StatelessWidget {
-  final int index;
-
-  CabinetListScreen({this.index});
+  var stationIndex;
+  CabinetListScreen({Key key, index}) {
+    stationIndex = index;
+  }
 //   CabinetListScreen({Key key}) : super(key: key);
 //   @override
 //   _CabinetListScreenState createState() => _CabinetListScreenState();
@@ -148,17 +149,20 @@ class CabinetListScreen extends StatelessWidget {
           CabinetData.stationID = cabList.cabinetList[index].cabOfStationID;
           // print(cabList.cabinetList[index]);
           CabinetData.priceInOneH =
-              stationData.station[index].stationAHourPrice;
-          CabinetData.priceInOneD = stationData.station[index].stationADayPrice;
+              stationData.station[stationIndex].stationAHourPrice;
+          CabinetData.priceInOneD =
+              stationData.station[stationIndex].stationADayPrice;
           CabinetData.priceInOneM =
-              stationData.station[index].stationAMonthPrice;
-          CabinetData.stationLoc = stationData.station[index].stationLocation;
+              stationData.station[stationIndex].stationAMonthPrice;
+          CabinetData.stationLoc =
+              stationData.station[stationIndex].stationLocation;
           CabinetData.stationAddress =
-              stationData.station[index].stationAddressDetail;
-          CabinetData.stationNo = stationData.station[index].stationNumber;
+              stationData.station[stationIndex].stationAddressDetail;
+          CabinetData.stationNo =
+              stationData.station[stationIndex].stationNumber;
 
-          print(CabinetData.priceInOneH);
           print(stationData.station[index].stationNumber);
+          print(stationData.station[index].stationLocation);
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -175,70 +179,7 @@ class CabinetListScreen extends StatelessWidget {
     Size size = MediaQuery.of(context).size;
     screenHeight = size.height;
     screenWidth = size.width;
-    // Old version
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //       flexibleSpace: Container(
-    //         decoration: BoxDecoration(
-    //           gradient: LinearGradient(
-    //             begin: Alignment.topCenter,
-    //             end: Alignment.bottomCenter,
-    //             colors: <Color>[Colors.blue, Colors.teal[100]],
-    //           ),
-    //         ),
-    //       ),
-    //       title: Text('Choose Cabinet in ' + cabstation_id[1]),
-    //       leading: IconButton(
-    //         icon: Icon(Icons.arrow_back),
-    //         onPressed: () {},
-    //       ),
-    //     ),
-    //     body: ListView.builder(
-    //       itemCount: 5,
-    //       itemBuilder: (BuildContext context, int index) {
-    //         return new GestureDetector(
-    //           child: new ListTile(
-    //               leading: Container(
-    //                 width: 100.0,
-    //                 height: 100.0,
-    //                 child: images[index],
-    //               ),
-    //               title: new Card(
-    //                 elevation: 5.0,
-    //                 child: new Container(
-    //                   alignment: Alignment.center,
-    //                   margin: new EdgeInsets.only(top: 25.0, bottom: 30.0),
-    //                   child: new Text("Cab No.$index"),
-    //                 ),
-    //               )),
-    //           onTap: () {
-    //             showDialog(
-    //                 context: context,
-    //                 barrierDismissible: false,
-    //                 child: new CupertinoAlertDialog(
-    //                   title: new Column(
-    //                     children: <Widget>[
-    //                       new Text("Do you want to use Cab $index ?"),
-    //                       new Icon(
-    //                         Icons.crop_square,
-    //                         color: Colors.green,
-    //                       )
-    //                     ],
-    //                   ),
-    //                   content: new Text("Selected Item $index"),
-    //                   actions: <Widget>[
-    //                     new FlatButton(
-    //                         onPressed: () {
-    //                           Navigator.of(context).pop();
-    //                         },
-    //                         child: new Text("OK"))
-    //                   ],
-    //                 ));
-    //           },
-    //         );
-    //       },
-    //     ),
-    //   );
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -258,7 +199,7 @@ class CabinetListScreen extends StatelessWidget {
         ),
         title: Center(
           child: Text('Choose Cabinet in ' +
-              stationData.station[index].stationLocation),
+              stationData.station[stationIndex].stationLocation),
         ),
         // leading: IconButton(
         //   icon: Icon(Icons.arrow_back),
@@ -282,12 +223,12 @@ class CabinetListScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(7.0),
               ),
               child: Hero(
-                tag: "cab $index",
+                tag: "station $stationIndex",
                 transitionOnUserGestures: true,
                 child: ClipRRect(
                   borderRadius: BorderRadius.all(Radius.circular(7.0)),
                   child: Image.asset(
-                    thumbnails[index],
+                    thumbnails[stationIndex],
                     fit: BoxFit.fill,
                   ),
                 ),
@@ -307,93 +248,6 @@ class CabinetListScreen extends StatelessWidget {
               itemBuilder: (BuildContext context, int index) {
                 return _buiCabContainer(context, index);
               },
-              // children: <Widget>[
-              //   Padding(
-              //     padding: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 6.0),
-              //     child: GestureDetector(
-              //       child: Container(
-              //         height: 150.0,
-              //         margin: const EdgeInsets.symmetric(horizontal: 2),
-              //         decoration: BoxDecoration(
-              //           border: Border.all(
-              //             color: Colors.lightBlueAccent[100],
-              //             width: 1.0,
-              //           ),
-              //           borderRadius: BorderRadius.circular(9.0),
-              //           boxShadow: [
-              //             BoxShadow(
-              //               color: Colors.lightBlueAccent[100].withOpacity(0.2),
-              //               spreadRadius: 4,
-              //               blurRadius: 5,
-              //             )
-              //           ],
-              //           color: Colors.white,
-              //         ),
-              //         child: Row(
-              //           mainAxisAlignment: MainAxisAlignment.start,
-              //           children: <Widget>[
-              //             Flexible(
-              //               flex: 2,
-              //               child: Container(
-              //                 height: 150.0,
-              //                 width: 150.0,
-              //                 decoration: BoxDecoration(
-              //                   gradient: LinearGradient(
-              //                     begin: Alignment.topCenter,
-              //                     end: Alignment.bottomCenter,
-              //                     colors: <Color>[
-              //                       Colors.green,
-              //                       Colors.blueAccent[700]
-              //                     ],
-              //                   ),
-              //                 ),
-              //                 child: Center(
-              //                   child: Text(
-              //                     'L',
-              //                     style: TextStyle(
-              //                       color: Colors.white,
-              //                       fontFamily: 'Roboto-Black',
-              //                       fontSize: 90.0,
-              //                     ),
-              //                   ),
-              //                 ),
-              //               ),
-              //             ),
-              //             Flexible(
-              //               flex: 3,
-              //               child: Column(
-              //                 mainAxisAlignment: MainAxisAlignment.start,
-              //                 children: <Widget>[
-              //                   Padding(
-              //                     padding: EdgeInsets.all(10.0),
-              //                     child: Text(
-              //                       "Cab No 2",
-              //                       style: TextStyle(
-              //                         fontSize: 20.0,
-              //                         fontFamily: 'Roboto-Black',
-              //                       ),
-              //                     ),
-              //                   ),
-              //                   Padding(
-              //                     padding: EdgeInsets.only(left: 20.0),
-              //                     child: Text(
-              //                       "Size: L \nL: 50 W: 50 H: 15 (cm) \nMax Weight: 5kg",
-              //                       style: TextStyle(
-              //                         fontSize: 18.0,
-              //                         fontFamily: 'Roboto-Regular',
-              //                       ),
-              //                     ),
-              //                   ),
-              //                 ],
-              //               ),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //       onTap: () {},
-              //     ),
-              //   ),
-              // ],
             ),
           ),
         ],
